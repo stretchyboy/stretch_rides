@@ -46,9 +46,9 @@ function getImageFromTCX (callback, error, ride) {
         altitude_first = 0;
     }
     
-    var aPoints = ride.map(function (item) {
-                var trkpt = L.latLng(item.lat, item.lng, item.altitude);
-                trkpt.meta = item.meta;
+    var aPoints = ride.map(function (segment) {
+                var trkpt = L.latLng(segment.lat, segment.lng, segment.altitude);
+                trkpt.meta = segment.meta;
                 return trkpt;    });
     
     var points = ride.map(function(segment, i){
@@ -162,12 +162,12 @@ function getImageFromTCX (callback, error, ride) {
         return segment;
     });
     
-    var aPoints = ride.map(function (item, i,segments) {
+    var aPoints = ride.map(function (segment, i, segments) {
         var color = Color('rgb(255, 0, 0)');
-        color = color.hsl().rotate(Math.round(item.speed * (240/32))).rgb();
+        color = color.hsl().rotate(Math.round(segment.speed * (240/32))).rgb();
         
-        iDistKM = Math.floor(item.distance /1000);
-        iDistM  = Math.floor(item.distance /1600);
+        iDistKM = Math.floor(segment.distance /1000);
+        iDistM  = Math.floor(segment.distance /1600);
         
         // DONE : So we could portray different info as well maybe using ,
             //an elevation profile insert https://github.com/MrMufflon/Leaflet.Elevation
@@ -182,33 +182,41 @@ function getImageFromTCX (callback, error, ride) {
                 stroke:true
             };
 
-            var circle = L.circle(item.point, circleOpts).addTo(map);
+            var circle = L.circle(segment.point, circleOpts).addTo(map);
         } else {            
+            var multiplier = 1.5;
+            var zero = 15;
+            var scaler = 20 * Math.PI;
+            
+            var weight = Math.ceil(multiplier*Math.sqrt(Math.pow(zero/multiplier,2) + (scaler * (segment.percent/ Math.PI))));
+            if(segment.percent < 0){
+                weight = Math.max(1, zero + Math.round(segment.percent*1));
+            }
             var lineOpts =  {
                 color:color.toString(), 
                 //lineCap:"butt",
                 //lineCap:"square",
-                //weight: Math.max(0.1, 15 + Math.round(item.percent*2)),
-                weight: Math.max(0.1, 2*Math.sqrt(30 + Math.round(item.percent*20) / Math.PI)),
-                opacity:Math.min(1, Math.max(0.2, 0.8 - Math.round(item.percent*0.05))),
+                //weight: Math.max(0.1, 15 + Math.round(segment.percent*2)),
+                weight:  weight,
+                opacity:Math.min(1, Math.max(0.2, 0.8 - Math.round(segment.percent*0.05))),
                 // TODO : maybe change the weight to reflect the area of the rounded line caps rather than radius propotional to gradient
                 //stroke:false
             };
             
-            var line = L.polyline([segments[i-1].point,item.point], lineOpts).addTo(map);
+            var line = L.polyline([segments[i-1].point,segment.point], lineOpts).addTo(map);
         }
         
         
         
         if(i==0|| (iDistKM > iCurrDistKM && (iDistKM % 10) ==0) ){
-            //console.log(item, cirleOpts);
+            console.log(segment, lineOpts);
         
             /*var popup = L.popup()
                 .setLatLng(trkpt)
                 .setContent(iDistKM+"km")
                 .openOn(map);
             */
-            var marker = L.marker(item.point, {
+            var marker = L.marker(segment.point, {
                 title:iDistKM+"km", 
                 renderer: L.canvas(),
                 permanent:true
@@ -240,7 +248,8 @@ if (require.main === module) {
     // DONE : Graphics it working pretty well from geojson so far but needs to convey more info.
     
     // DONE : Save png with sensible name
-    var filename = "data/2017-05-01_Morning ride_Cycling.tcx"; 
+    //var filename = "data/2017-05-01_Morning ride_Cycling.tcx"; 
+    var filename = "data/2017-05-27_Cycling (1).tcx"; 
     
     //var filename = "data/2017-06-02_Cycling (1).tcx";
     //var filename = "data/2017-06-02_Cycling.tcx";
