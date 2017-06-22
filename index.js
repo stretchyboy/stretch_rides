@@ -1,139 +1,116 @@
+var express = require('express')
+var app = express();
+var path = require('path');
+var Dropbox = require('dropbox');
+var access_token = 'zOcdQG6CisYAAAAAAAAru7phxDRH1I10FlEHjdTvPNmFA5iaU7yIHKNJP1huwlr1'
+var dbx = new Dropbox({ accessToken:  access_token});
+var fs = require("fs");
+var imagefromtcx = require("./imagefromtcx");
 
-var strava = require('strava-v3');
-
-var onStarredSegments = function(err,payload,limits) {
-  console.log("onStarredSegments");
-  payload = payload.map(function(oSeg){
-    delete oSeg.start_latitude;
-    delete oSeg.start_longitude;
-    delete oSeg.end_latitude;
-    delete oSeg.end_longitude;
-    delete oSeg.starred;
-    delete oSeg.starred_date;
-    return oSeg;
-  });
-    if(!err) {
-        console.log(payload);
-    }
-    else {
-        console.log(err);
-    }
-};
-
-var onAthlete = function(err,payload,limits) {
-    console.log("onAthlete");
-    if(!err) {
-        console.log(payload);
-        strava.segments.listStarred({page: 1, per_page: 30} , onStarredSegments);
-    }
-    else {
-        console.log(err);
-    }
-};
-
-
-var onListEfforts = function(err,payload,limits) {
-    console.log("onListEfforts");
-    if(!err) {
-        console.log(payload);
-    }
-    else {
-        console.log(err);
-    }
-};
-
-var onListSegments = function(err,payload,limits) {
-  console.log("onListSegments");
-    if(!err) {
-        console.log(payload);
-        strava.segments.listEfforts({page: 1, per_page: 30} , onListEfforts);
-    }
-    else {
-        console.log(err);
-    }
-};
-
-
-strava.athlete.get({},onAthlete);
-
-    
-// JavaScript File
-var gu = require('gps-util');
-//console.log(Object.keys(gu));
-var filename = "data/2017-05-01_Morning ride_Cycling.tcx"; 
-var callback = function(error, ride){
-  if(error){
-      console.error(error);
-  }  
-  console.log("ride", ride.length,"segments");
+function onImageComplete(outfile){
   
-  var samples = 3;
-  ride = ride.map(function(segment, i){
-      
-      segment.recent_dist = 0;
-      segment.recent_gain = 0;
-      segment.recent_gradient = 0;
-      
-      if(i >= samples){
-        segment.recent_dist = segment.distance - ride[i-samples].distance ;
-        segment.recent_gain = segment.altitude - ride[i-samples].altitude ;
-        if (segment.recent_dist > 0){
-            segment.recent_gradient = segment.recent_gain / segment.recent_dist;
-        }
-      }
-      
-      segment.dist_delta = 0;
-      segment.gain = 0;
-      segment.gradient = 0;
-      
-      if(i >= 1){
-        segment.dist_delta = segment.distance - ride[i-1].distance ;
-        segment.gain = segment.altitude - ride[i-1].altitude ;
-        if (segment.dist_delta > 0){
-            segment.gradient = segment.gain / segment.dist_delta;
-            segment.percent = Math.round(segment.gradient * 100);
-        }
-      }
-      
-      return segment;
-  });
-  
-  var moving = ride.filter(function(segment, i){
-      return segment.speed > 0 || segment.recent_gradient > 0.01;
-  })
-  
-  var notmoving = ride.filter(function(segment, i){
-      return segment.speed == 0 && segment.recent_dist > 0;
-  })
-  console.log("moving", moving.length,"segments");
-  
-  console.log("notmoving", notmoving.length,"segments", ride.length - notmoving.length);
-  
-  //find natural segments (contigumous by steepness)
-  var aSegments = [];
-  
-  ride.forEach(function(segment, i){
-    //classify the segments (gradient, length, time into ride)
-    //save the file (or master file with sections??)
-    if(aSegments.length == 0){
-      aSegments.push(segment);
-    } else{
-      var currSegment = aSegments[aSegments.length - 1];
-      if(currSegment.percent == segment.percent)
-      {
-        // do avergaes
-      }
-    }
-  });
-  
-  
-  
-  //gu.tcxParseFile(filename, callback);
-
-  //Anaylise target race in same way 
-  //score for simliarnessthe each segment of every race versus each segement of the target
-  //choose the best match for each segemnt 
-  //multiply the time from the matching segement by the ratio of the distances
-  //add it all up.
 }
-  //TODO;
+
+app.get('/rideimage/:filename', function (req, res) {
+  console.log(req.params);
+  var sAppPath = ("/Apps/tapiriik/"+req.params.filename).toLowerCase();
+  var sFilePath = "data/"+req.params.filename;
+
+var node_dropbox = require('node-dropbox');
+var api = node_dropbox.api(access_token);
+  
+  api.getFile(sAppPath, function(err, response, body){
+    if (err) { throw err; }
+    console.log(response, body);
+    fs.writeFile(sFilePath, body, 'utf8', function (err) {
+          if (err) { throw err; }
+          console.log('File: ' + sFilePath + ' saved.');
+          imagefromtcx.stretchmaps.getImageFromTCXfile(sFilePath);
+          //process.exit();
+        });
+  });
+  //TRY https://www.npmjs.com/package/node-dropbox instead
+  
+  /*dbx.filesListFolder({path: '/Apps/tapiriik'})
+  .then(function(response) {
+    console.log(response);
+    response.entries.forEach(function(entry){
+     //console.log("entry", entry);
+     dbx.filesDownload({ path: entry.path_lower })
+      .then(function (data) {
+        //console.log(data);
+        if (typeof data.fileBinary == 'undefined' || data.fileBinary == 'undefined'){
+          throw new Error("data.fileBinary missing");
+          
+        }
+        fs.writeFile("data/"+data.name, data.fileBinary, 'binary', function (err) {
+          if (err) { throw err; }
+          console.log('File: ' + data.name + ' saved.');
+          //process.exit();
+        });
+      })
+      .catch(function (err) {
+        throw err;
+      });
+      // 
+    });  
+  })
+  .catch(function(error) {
+    console.log(error);
+  });
+  */
+  /*
+  var sAppPath = ("/Apps/tapiriik/"+req.params.filename).toLowerCase();
+  var sFilePath = "data/"+req.params.filename;
+  
+  dbx.filesListFolder({path: '/Apps/tapiriik'})
+  .then(function(response) {
+    console.log(response);
+    response.entries.forEach(function(entry){
+     //console.log("entry", entry);
+     if( entry.path_lower == sAppPath){
+       
+     dbx.filesDownload({ path: entry.path_lower })
+      .then(function (data) {
+        console.log("data", data);
+        if (typeof data.fileBinary == 'undefined' || data.fileBinary == 'undefined'){
+          throw new Error("data.fileBinary missing");
+          
+        }
+        fs.writeFile("data/"+data.name, data.fileBinary, 'binary', function (err) {
+          if (err) { throw err; }
+          console.log('File: ' + data.name + ' saved.');
+          imagefromtcx.stretchmaps.getImageFromTCXfile(sFilePath);
+  
+          //process.exit();
+        });
+      })
+      .catch(function (err) {
+        throw err;
+      });
+      }
+      // 
+    });  
+  })
+  .catch(function(error) {
+    console.log(error);
+  });
+  */
+  
+ /* dbx.filesDownload({ path: sAppPath })
+      .then(function (data) {
+        console.log(data);
+        fs.writeFile(sFilePath, data.fileBinary, 'binary', function (err) {
+          if (err) { throw err; }
+          
+          console.log('File: ' + sFilePath + ' being created.');
+          });
+        })
+        .catch(function (err) {
+          throw err;
+        });
+   */     
+  res.send('Tar.')
+})
+ 
+app.listen(process.env.PORT,process.env.IP);
