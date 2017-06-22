@@ -8,6 +8,14 @@ var stretchmaps = require("./stretchmaps");
 var access_token = 'zOcdQG6CisYAAAAAAAAru7phxDRH1I10FlEHjdTvPNmFA5iaU7yIHKNJP1huwlr1';
 var api = node_dropbox.api(access_token);
 
+if(!fs.existsSync("data")){
+  fs.mkdirSync("data");
+}
+
+if(!fs.existsSync("images")){
+  fs.mkdirSync("images");
+}
+
 function onImageComplete(res, outfile, summary){
   
   summary.imageurl = "https://stretch-rides-stretchyboy.c9users.io/images/"+outfile;
@@ -19,7 +27,7 @@ function onImageComplete(res, outfile, summary){
   iftttURL = iftttURL.replace("{event}", "new_image");
   var values = {"value1":summary.imageurl, "value2":summary.distance,"value3":summary.duration};
   console.log(values);
-  if(false){
+  if(true){
     var outrequest = require('request-json');
     var client = outrequest.createClient(iftttHost);
     client.get(iftttURL, values, function(err, res2, body) {
