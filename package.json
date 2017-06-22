@@ -4,7 +4,8 @@
   "description": "My utils for analysing bike ride gpx/tcx files. ",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -15,7 +16,8 @@
     "gpx"
   ],
   "engines": {
-    "node": "4.7.3"
+    "node": "4.7.3",
+    "npm": "2.15.11"
   },
   "author": "Martyn Eggleton",
   "license": "GPL-3.0",

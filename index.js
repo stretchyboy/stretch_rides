@@ -1,116 +1,54 @@
-var express = require('express')
+var express = require('express');
 var app = express();
-var path = require('path');
-var Dropbox = require('dropbox');
-var access_token = 'zOcdQG6CisYAAAAAAAAru7phxDRH1I10FlEHjdTvPNmFA5iaU7yIHKNJP1huwlr1'
-var dbx = new Dropbox({ accessToken:  access_token});
+var node_dropbox = require('node-dropbox');
 var fs = require("fs");
-var imagefromtcx = require("./imagefromtcx");
+var path = require("path");
+var stretchmaps = require("./stretchmaps");
 
-function onImageComplete(outfile){
+var access_token = 'zOcdQG6CisYAAAAAAAAru7phxDRH1I10FlEHjdTvPNmFA5iaU7yIHKNJP1huwlr1';
+var api = node_dropbox.api(access_token);
+
+function onImageComplete(res, outfile, summary){
+  
+  summary.imageurl = "https://stretch-rides-stretchyboy.c9users.io/images/"+outfile;
+  console.log("summary", summary);
+  
+  var iftttHost = "https://maker.ifttt.com";
+  var iftttURL = "trigger/{event}/with/key/okLg00sVqcknugfXoX9Oxhf8fpVXjRtZVSv_yY9Wxya"
+  iftttURL = iftttURL.replace("{event}", "new_image");
+  var values = {"value1":summary.imageurl, "value2":summary.distance,"value3":summary.duration};
+  console.log(values);
+  if(false){
+    var outrequest = require('request-json');
+    var client = outrequest.createClient(iftttHost);
+    client.get(iftttURL, values, function(err, res2, body) {
+      if (err) { throw err; }
+      console.log("body",body);
+      res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
+    });
+  } else {
+    res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
+  }
   
 }
 
 app.get('/rideimage/:filename', function (req, res) {
-  console.log(req.params);
+  //console.log(req.params);
   var sAppPath = ("/Apps/tapiriik/"+req.params.filename).toLowerCase();
   var sFilePath = "data/"+req.params.filename;
-
-var node_dropbox = require('node-dropbox');
-var api = node_dropbox.api(access_token);
+  var onThisImageComplete = onImageComplete.bind(this, res);
   
   api.getFile(sAppPath, function(err, response, body){
     if (err) { throw err; }
-    console.log(response, body);
+    //console.log(response, body);
     fs.writeFile(sFilePath, body, 'utf8', function (err) {
-          if (err) { throw err; }
-          console.log('File: ' + sFilePath + ' saved.');
-          imagefromtcx.stretchmaps.getImageFromTCXfile(sFilePath);
-          //process.exit();
-        });
+      if (err) { throw err; }
+      console.log('File: ' + sFilePath + ' saved.');
+      stretchmaps.stretchmaps.getImageFromTCXfile(sFilePath,onThisImageComplete);
+    });
   });
-  //TRY https://www.npmjs.com/package/node-dropbox instead
-  
-  /*dbx.filesListFolder({path: '/Apps/tapiriik'})
-  .then(function(response) {
-    console.log(response);
-    response.entries.forEach(function(entry){
-     //console.log("entry", entry);
-     dbx.filesDownload({ path: entry.path_lower })
-      .then(function (data) {
-        //console.log(data);
-        if (typeof data.fileBinary == 'undefined' || data.fileBinary == 'undefined'){
-          throw new Error("data.fileBinary missing");
-          
-        }
-        fs.writeFile("data/"+data.name, data.fileBinary, 'binary', function (err) {
-          if (err) { throw err; }
-          console.log('File: ' + data.name + ' saved.');
-          //process.exit();
-        });
-      })
-      .catch(function (err) {
-        throw err;
-      });
-      // 
-    });  
-  })
-  .catch(function(error) {
-    console.log(error);
-  });
-  */
-  /*
-  var sAppPath = ("/Apps/tapiriik/"+req.params.filename).toLowerCase();
-  var sFilePath = "data/"+req.params.filename;
-  
-  dbx.filesListFolder({path: '/Apps/tapiriik'})
-  .then(function(response) {
-    console.log(response);
-    response.entries.forEach(function(entry){
-     //console.log("entry", entry);
-     if( entry.path_lower == sAppPath){
-       
-     dbx.filesDownload({ path: entry.path_lower })
-      .then(function (data) {
-        console.log("data", data);
-        if (typeof data.fileBinary == 'undefined' || data.fileBinary == 'undefined'){
-          throw new Error("data.fileBinary missing");
-          
-        }
-        fs.writeFile("data/"+data.name, data.fileBinary, 'binary', function (err) {
-          if (err) { throw err; }
-          console.log('File: ' + data.name + ' saved.');
-          imagefromtcx.stretchmaps.getImageFromTCXfile(sFilePath);
-  
-          //process.exit();
-        });
-      })
-      .catch(function (err) {
-        throw err;
-      });
-      }
-      // 
-    });  
-  })
-  .catch(function(error) {
-    console.log(error);
-  });
-  */
-  
- /* dbx.filesDownload({ path: sAppPath })
-      .then(function (data) {
-        console.log(data);
-        fs.writeFile(sFilePath, data.fileBinary, 'binary', function (err) {
-          if (err) { throw err; }
-          
-          console.log('File: ' + sFilePath + ' being created.');
-          });
-        })
-        .catch(function (err) {
-          throw err;
-        });
-   */     
-  res.send('Tar.')
-})
+});
+ 
+app.use('/images', express.static(path.join(__dirname, 'images')))
  
 app.listen(process.env.PORT,process.env.IP);
