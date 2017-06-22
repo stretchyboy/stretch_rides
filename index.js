@@ -14,7 +14,8 @@ function onImageComplete(res, outfile, summary){
   console.log("summary", summary);
   
   var iftttHost = "https://maker.ifttt.com";
-  var iftttURL = "trigger/{event}/with/key/okLg00sVqcknugfXoX9Oxhf8fpVXjRtZVSv_yY9Wxya"
+  var iftttURL = "trigger/{event}/with/key/okLg00sVqcknugfXoX9Oxhf8fpVXjRtZVSv_yY9Wxya";
+  
   iftttURL = iftttURL.replace("{event}", "new_image");
   var values = {"value1":summary.imageurl, "value2":summary.distance,"value3":summary.duration};
   console.log(values);
