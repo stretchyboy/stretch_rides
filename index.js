@@ -27,16 +27,16 @@ function onImageComplete(res, outfile, summary){
   iftttURL = iftttURL.replace("{event}", "new_image");
   var values = {"value1":summary.imageurl, "value2":summary.distance,"value3":summary.duration};
   console.log(values);
+  res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
+  
   if(true){
     var outrequest = require('request-json');
     var client = outrequest.createClient(iftttHost);
     client.get(iftttURL, values, function(err, res2, body) {
       if (err) { throw err; }
       console.log("body",body);
-      res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
+      //res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
     });
-  } else {
-    res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
   }
   
 }
