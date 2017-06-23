@@ -20,7 +20,7 @@ if(!fs.existsSync("images")){
 function onImageComplete(res, outfile, summary){
   
   // FIXME : host ??
-  summary.imageurl = process.env.baseURL+"/images/"+outfile;
+  summary.imageurl = process.env.baseURL+"images/"+outfile;
   //summary.imageurl = "https://stretch-rides-stretchyboy.c9users.io/images/"+outfile;
   console.log("summary", summary);
   res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
