@@ -18,6 +18,7 @@ if(!fs.existsSync("images")){
 
 function onImageComplete(res, outfile, summary){
   
+  // FIXME : host ??
   summary.imageurl = "https://stretch-rides-stretchyboy.c9users.io/images/"+outfile;
   console.log("summary", summary);
   
@@ -47,6 +48,7 @@ app.get('/rideimage/:filename', function (req, res) {
   var sFilePath = "data/"+req.params.filename;
   var onThisImageComplete = onImageComplete.bind(this, res);
   
+  // TODO : if file exists just send that back don't rebuild it
   api.getFile(sAppPath, function(err, response, body){
     if (err) { throw err; }
     //console.log(response, body);
