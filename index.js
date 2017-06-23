@@ -4,6 +4,7 @@ var node_dropbox = require('node-dropbox');
 var fs = require("fs");
 var path = require("path");
 var stretchmaps = require("./stretchmaps");
+var os = require("os");
 
 var access_token = 'zOcdQG6CisYAAAAAAAAru7phxDRH1I10FlEHjdTvPNmFA5iaU7yIHKNJP1huwlr1';
 var api = node_dropbox.api(access_token);
@@ -19,16 +20,37 @@ if(!fs.existsSync("images")){
 function onImageComplete(res, outfile, summary){
   
   // FIXME : host ??
-  summary.imageurl = "https://stretch-rides-stretchyboy.c9users.io/images/"+outfile;
+  summary.imageurl = process.env.baseURL+"/images/"+outfile;
+  //summary.imageurl = "https://stretch-rides-stretchyboy.c9users.io/images/"+outfile;
   console.log("summary", summary);
   
-  var iftttHost = "https://maker.ifttt.com";
+  const IFTTTmaker = require('node-ifttt-maker');
+  const ifttt_maker = new IFTTTmaker('okLg00sVqcknugfXoX9Oxhf8fpVXjRtZVSv_yY9Wxya');
+
+  const event = 'new_image';
+  const values = {
+      "value1":summary.imageurl,
+      "value2":summary.distance,
+      "value3":summary.duration};
+   
+  // Simple request 
+  ifttt_maker
+    .request(event, values)
+    .then((response) => {
+      res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
+    })
+    .catch((err) => {
+      res.send("Oops"+err);
+    });
+   
+
+  /*var iftttHost = "https://maker.ifttt.com";
   var iftttURL = "trigger/{event}/with/key/okLg00sVqcknugfXoX9Oxhf8fpVXjRtZVSv_yY9Wxya";
   
   iftttURL = iftttURL.replace("{event}", "new_image");
   var values = {"value1":summary.imageurl, "value2":summary.distance,"value3":summary.duration};
   console.log(values);
-  res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
+  //res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
   
   if(true){
     var outrequest = require('request-json');
@@ -39,6 +61,7 @@ function onImageComplete(res, outfile, summary){
       //res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
     });
   }
+  */
   
 }
 
