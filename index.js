@@ -23,7 +23,8 @@ function onImageComplete(res, outfile, summary){
   summary.imageurl = process.env.baseURL+"/images/"+outfile;
   //summary.imageurl = "https://stretch-rides-stretchyboy.c9users.io/images/"+outfile;
   console.log("summary", summary);
-  
+  res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
+
   const IFTTTmaker = require('node-ifttt-maker');
   const ifttt_maker = new IFTTTmaker('okLg00sVqcknugfXoX9Oxhf8fpVXjRtZVSv_yY9Wxya');
 
@@ -37,7 +38,7 @@ function onImageComplete(res, outfile, summary){
   ifttt_maker
     .request(event, values)
     .then((response) => {
-      res.send('<img src="'+summary.imageurl+'" /><br>Completed succesfully');
+      console.log("Done.")
     })
     .catch((err) => {
       res.send("Oops"+err);
