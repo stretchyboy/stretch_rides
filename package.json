@@ -16,7 +16,7 @@
     "gpx"
   ],
   "engines": {
-    "node": "4.7.3",
+    "node": "4.8.4",
     "npm": "2.15.11"
   },
   "author": "Martyn Eggleton",
@@ -29,6 +29,7 @@
     "color": "^1.0.3",
     "dropbox": "^2.5.4",
     "express": "^4.15.3",
+    "express-dropbox-middleware": "^1.0.0",
     "geojson-bounds": "^1.0.1",
     "gps-util": "^1.0.1",
     "leaflet-headless": "^0.2.5",
@@ -40,6 +41,7 @@
     "pngjs-draw": "0.0.6",
     "request-json": "^0.6.2",
     "stats-lite": "^2.0.4",
-    "strava-v3": "^1.14.0"
+    "strava-v3": "^1.14.0",
+    "tmp": "0.0.31"
   }
 }
